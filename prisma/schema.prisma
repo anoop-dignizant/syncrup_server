@@ -1,0 +1,46 @@
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Project {
+  id        String   @id @default(uuid())
+  name      String
+  createdAt DateTime @default(now())
+  repos     Repository[]
+}
+
+model Repository {
+  id        String   @id @default(uuid())
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id])
+  name      String
+  url       String
+  type      String   // SERVER, WEB, MOBILE
+  branch    String   @default("main")
+  status    String   // PENDING, INDEXED, FAILED
+  scans     Scan[]
+}
+
+model Scan {
+  id         String   @id @default(uuid())
+  repoId     String
+  repo       Repository @relation(fields: [repoId], references: [id])
+  commitHash String?
+  status     String   // RUNNING, COMPLETED, FAILED
+  startedAt  DateTime @default(now())
+  completedAt DateTime?
+  impactReports ImpactReport[]
+}
+
+model ImpactReport {
+  id        String   @id @default(uuid())
+  scanId    String
+  scan      Scan     @relation(fields: [scanId], references: [id])
+  summary   String   @db.Text // JSON string of impact summary
+  createdAt DateTime @default(now())
+}
